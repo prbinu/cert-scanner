@@ -564,11 +564,28 @@ func (s Scanner) Run() {
 // Scan endpoints like HTTPS
 func (s Scanner) TlsConnect(addr string) error {
 
-	dialer := &net.Dialer{
-		Timeout: s.timeout,
+	conn, err := net.DialTimeout("tcp", addr+":"+s.port, s.timeout)
+	if err != nil {
+		errmsg := fmt.Sprintf("host: %s| error: connect failed| error_msg: %v\n", addr, err)
+		s.errRecord <- []byte(errmsg)
+		return err
 	}
 
-	c, err := tls.DialWithDialer(dialer, "tcp", addr+":"+s.port, s.tlsConfig)
+	if err = conn.SetDeadline(time.Now().Add(s.timeout)); err != nil {
+		//errmsg := fmt.Sprintf("host: %s| error: connect setDeadline failed| error_msg: %v\n", addr, err)
+		//s.errRecord <- []byte(errmsg)
+		//return err
+	}
+
+	// set SO_LINGER timeout to zero to avoid large numbers of connections 
+	// sitting in the TIME_WAIT state and using up the available IP port range
+	// (port range: net.ipv4.ip_local_port_range).
+	// also make sure to enable net.ipv4.tcp_tw_reuse to 1
+	// ref: https://vincent.bernat.im/en/blog/2014-tcp-time-wait-state-linux.html
+	conn.(*net.TCPConn).SetLinger(0)
+	c := tls.Client(conn, s.tlsConfig)
+	err = c.Handshake()
+
 	if err != nil {
 		errmsg := fmt.Sprintf("host: %s| error: connect failed| error_msg: %v\n", addr, err)
 		s.errRecord <- []byte(errmsg)
