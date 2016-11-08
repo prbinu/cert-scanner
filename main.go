@@ -637,6 +637,11 @@ func (s Scanner) StarttlsConnect(addr string) error {
 		//return err
 	}
 
+	// set SO_LINGER timeout to zero to avoid large numbers of connections 
+	// sitting in the TIME_WAIT state and using up the available IP port range
+	// (port range: net.ipv4.ip_local_port_range).
+	// also make sure to enable net.ipv4.tcp_tw_reuse to 1
+	conn.(*net.TCPConn).SetLinger(0)
 	a, _ := conn.RemoteAddr().(*net.TCPAddr)
 	errmsg += " IP: " + a.IP.String()
 	host, _, _ := net.SplitHostPort(addr + ":" + s.port)
