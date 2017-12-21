@@ -6,7 +6,7 @@ A fast TLS Cert scanner written in golang to scan HTTPS and SMTP servers, extrac
 Prequisites: [golang](https://golang.org/dl/)
 
 ```
-% git clone git@github.com/prbinu/cert-scanner.git
+% git clone https://github.com/prbinu/cert-scanner.git
 % cd cert-scanner
 % go build
 ```
