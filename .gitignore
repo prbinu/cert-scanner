@@ -1,0 +1,4 @@
+cert-scanner
+*-certs.txt
+*-errors.txt
+*.old

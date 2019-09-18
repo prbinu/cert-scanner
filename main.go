@@ -384,6 +384,10 @@ type Scanner struct {
 	quiet     bool
 }
 
+var (
+	sniPtr = flag.Bool("sni", false, "use SNI")
+)
+
 // Starting point!
 func main() {
 	portPtr := flag.String("port", "25", "Port to scan")
@@ -577,12 +581,17 @@ func (s Scanner) TlsConnect(addr string) error {
 		//return err
 	}
 
-	// set SO_LINGER timeout to zero to avoid large numbers of connections 
+	// set SO_LINGER timeout to zero to avoid large numbers of connections
 	// sitting in the TIME_WAIT state and using up the available IP port range
 	// (port range: net.ipv4.ip_local_port_range).
 	// also make sure to enable net.ipv4.tcp_tw_reuse to 1
 	// ref: https://vincent.bernat.im/en/blog/2014-tcp-time-wait-state-linux.html
 	conn.(*net.TCPConn).SetLinger(0)
+
+	if *sniPtr {
+		s.tlsConfig.ServerName = addr
+	}
+
 	c := tls.Client(conn, s.tlsConfig)
 	err = c.Handshake()
 
@@ -637,7 +646,7 @@ func (s Scanner) StarttlsConnect(addr string) error {
 		//return err
 	}
 
-	// set SO_LINGER timeout to zero to avoid large numbers of connections 
+	// set SO_LINGER timeout to zero to avoid large numbers of connections
 	// sitting in the TIME_WAIT state and using up the available IP port range
 	// (port range: net.ipv4.ip_local_port_range).
 	// also make sure to enable net.ipv4.tcp_tw_reuse to 1
